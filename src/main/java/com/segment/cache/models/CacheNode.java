@@ -3,19 +3,19 @@ package com.segment.cache.models;
 public class CacheNode {
     private String key;
     private String value;
-    private Long expiry;
+    private String expiry;
 
-    public CacheNode(String key, String value, Long expiry) {
+    public CacheNode(String key, String value, String expiry) {
         this.key = key;
         this.value = value;
         this.expiry = expiry;
     }
 
-    public Long getExpiry() {
+    public String getExpiry() {
         return expiry;
     }
 
-    public void setExpiry(Long expiry) {
+    public void setExpiry(String expiry) {
         this.expiry = expiry;
     }
 

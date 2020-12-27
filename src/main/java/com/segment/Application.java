@@ -14,11 +14,29 @@ public class Application {
     public static AppExceptionHandler appExceptionHandler;
 
     public static void main(String[] args) {
-        String REDIS_HOST = (args[0] != null ? args[0]:"127.0.0.1");
-        int REDIS_PORT = (args[1] != null ? Integer.parseInt(args[1]):6379);
-        int GLOBAL_EXPIRY = (args[2] != null ? Integer.parseInt(args[2]):60);
-        int CACHE_SIZE = (args[3] != null ? Integer.parseInt(args[3]):15);
-        int PROXY_PORT = (args[4] != null ? Integer.parseInt(args[4]):8080);
+        String REDIS_HOST = "127.0.0.1";
+        int REDIS_PORT = 6379;
+        int GLOBAL_EXPIRY = 60;
+        int CACHE_SIZE = 15;
+        int PROXY_PORT = 8080;
+
+        for (String arg:args) {
+            if(arg.startsWith("--REDIS_HOST")) {
+                REDIS_HOST = arg.substring(13);
+            }
+            if(arg.startsWith("--REDIS_PORT")) {
+                REDIS_PORT = Integer.parseInt(arg.substring(13));
+            }
+            if(arg.startsWith("--GLOBAL_EXPIRY")) {
+                GLOBAL_EXPIRY = Integer.parseInt(arg.substring(16));
+            }
+            if(arg.startsWith("--CACHE_SIZE")) {
+                CACHE_SIZE = Integer.parseInt(arg.substring(13));
+            }
+            if(arg.startsWith("--PROXY_PORT")) {
+                PROXY_PORT = Integer.parseInt(arg.substring(13));
+            }
+        }
 
         cache = new LocalCache(CACHE_SIZE, GLOBAL_EXPIRY, REDIS_HOST, REDIS_PORT);
         appExceptionHandler = new AppExceptionHandler();

@@ -2,7 +2,8 @@ package com.segment.cache.dao;
 
 import com.segment.cache.models.CacheNode;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +27,8 @@ public class LocalCache {
     public String get(String key) {
         if (localCache.get(key) != null) {
             CacheNode node = localCache.get(key);
-            if (node.getExpiry()> Instant.now().getEpochSecond()) {
+            LocalDateTime expiryTime = LocalDateTime.parse(node.getExpiry());
+            if (LocalDateTime.now().isAfter(expiryTime)) {
                 tracker.remove(node);
                 localCache.remove(key);
                 return null;
@@ -35,14 +37,16 @@ public class LocalCache {
             tracker.add(node);
             return node.getValue();
         } else {
-            CacheNode node = redis.getCacheNodeFromRedis(key);
-            if (node != null) {
+            String value = redis.getCacheNodeFromRedis(key);
+            if (value != null && value.length() > 0) {
+                LocalDateTime currentDateTime = LocalDateTime.now();
+                LocalDateTime expiry = currentDateTime.plus(GLOBAL_EXPIRY_DURATION, ChronoUnit.SECONDS);
+                CacheNode node = new CacheNode(key, value, expiry.toString());
                 evictIfRequired();
                 localCache.put(key,node);
                 tracker.add(node);
-                return node.getValue();
             }
-           return null;
+            return value;
         }
     }
     private void evictIfRequired() {
