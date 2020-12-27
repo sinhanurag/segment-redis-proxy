@@ -3,7 +3,6 @@ package com.segment.common.util;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
-import spark.ResponseTransformer;
 
 public class JsonUtil {
     public static String stringToJson(String string) {

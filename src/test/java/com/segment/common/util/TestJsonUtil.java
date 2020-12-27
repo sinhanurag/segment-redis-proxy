@@ -1,6 +1,5 @@
 package com.segment.common.util;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 public class TestJsonUtil {

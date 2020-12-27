@@ -1,9 +1,6 @@
 package com.segment.cache.dao;
 
 import com.segment.cache.models.CacheNode;
-import com.segment.common.exception.objects.AppException;
-import com.segment.common.exception.objects.ErrorCode;
-import com.segment.common.util.JsonUtil;
 
 import java.time.Instant;
 import java.util.Map;
@@ -24,10 +21,6 @@ public class LocalCache {
         localCache = new ConcurrentHashMap<>(size);
         tracker = new ConcurrentLinkedQueue<>();
         redis = new RedisDao(redisHost, redisPort);
-//        put("key1", "{\"name\":\"Anurag\",\"company\":\"PayPal\"}");
-//        put("key2", "{\"name\":\"Amit\",\"company\":\"PayPal\"}");
-//        put("key3", "{\"name\":\"Sanjay\",\"company\":\"eBay\"}");
-//        put("key4", "{\"name\":\"Sumit\",\"company\":\"Segment\"}");
     }
 
     public String get(String key) {
