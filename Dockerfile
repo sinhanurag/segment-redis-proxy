@@ -34,6 +34,7 @@ EXPOSE 8080
 
 RUN mkdir -p /usr/app /usr/app/segment-redis-proxy 
 COPY .. / /usr/app/segment-redis-proxy
+RUN ["ls","-l","/usr/app/segment-redis-proxy"]
 RUN ["chmod","+x" ,"/usr/app/segment-redis-proxy/commands.sh"]
 
 WORKDIR /usr/app/segment-redis-proxy

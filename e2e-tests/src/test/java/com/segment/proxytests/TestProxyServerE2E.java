@@ -21,11 +21,11 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-public class ProxyServerE2ETest {
+public class TestProxyServerE2E {
 
     private static final Jedis redis = new Jedis("127.0.0.1", 6379, 1800);
     private static final HttpClient client = HttpClientBuilder.create().build();
-    private static final Logger logger = LoggerFactory.getLogger(ProxyServerE2ETest.class);
+    private static final Logger logger = LoggerFactory.getLogger(TestProxyServerE2E.class);
     private static final List<String> testData = new ArrayList<>();
 
     @BeforeAll
