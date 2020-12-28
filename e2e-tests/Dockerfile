@@ -36,4 +36,4 @@ RUN ["chmod","+x" ,"/usr/app/e2e-tests/wait-for-it.sh"]
 
 WORKDIR /usr/app/e2e-tests
 
-ENTRYPOINT ["/usr/app/e2e-tests/wait-for-it.sh","proxy-service:8080","-t","18","--","mvn","test"]
+ENTRYPOINT ["/usr/app/e2e-tests/wait-for-it.sh"]

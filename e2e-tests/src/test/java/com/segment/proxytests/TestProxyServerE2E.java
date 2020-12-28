@@ -174,9 +174,11 @@ public class TestProxyServerE2E {
     private String getValueForKeyFromProxy(String key, int expectedStatusCode) {
     HttpGet request = new HttpGet("http://"+PROXY_HOST+":"+PROXY_PORT+"/cache/"+key);
         StringBuilder responseString = new StringBuilder();
+        int actualStatusCode = 0;
         try {
             HttpResponse response = client.execute(request);
-            Assertions.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
+            actualStatusCode = response.getStatusLine().getStatusCode();
+            Assertions.assertEquals(expectedStatusCode, actualStatusCode);
             BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
 
             String line = "";
@@ -187,6 +189,13 @@ public class TestProxyServerE2E {
                 logger.error("Error connecting to ProxyService", ExceptionUtils.getStackTrace(ex));
                 Assertions.fail();
             }
+
+        if (actualStatusCode == 200) {
+            logger.info("Successfully obtained response from proxy for key: "+key);
+        } else {
+            logger.info("Error getting response from proxy for key: "+key+" error code: "+actualStatusCode);
+        }
+
         return responseString.toString().replace(" ","");
     }
 
@@ -205,6 +214,6 @@ public class TestProxyServerE2E {
                 Assertions.fail();
             }
         }
-        logger.info("Successfully set key value to Redis");
+        logger.info("Successfully set value in Redis for key: "+key);
     }
 }
