@@ -23,10 +23,13 @@ import java.util.UUID;
 
 public class TestProxyServerE2E {
 
-    private static final Jedis redis = new Jedis("redis", 6379, 1800);
+    private static final String REDIS_HOST = "redis";
+    private static final String PROXY_HOST = "proxy-service";
+    private static final Jedis redis = new Jedis(REDIS_HOST, 6379, 1800);
     private static final HttpClient client = HttpClientBuilder.create().build();
     private static final Logger logger = LoggerFactory.getLogger(TestProxyServerE2E.class);
     private static final List<String> testData = new ArrayList<>();
+    private static final String NOT_FOUND_MESSAGE = "{\"errorCode\":\"RESOURCE_NOT_FOUND\",\"details\":\"Requestedresourcenotfoundontheserver\"}";
 
     @BeforeAll
     public static void initTestData(){
@@ -52,22 +55,11 @@ public class TestProxyServerE2E {
         String key = UUID.randomUUID().toString();
         setKeyValueToRedisWithRetry(key, expected);
 
-        HttpGet request = new HttpGet("http://proxy-service:8080/cache/"+key);
-        try {
-            HttpResponse response = client.execute(request);
-            BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+        String actual = getValueForKeyFromProxy(key, 200);
 
-            String line = "";
-            StringBuilder actual = new StringBuilder();
-            while ((line = rd.readLine()) != null) {
-                actual.append(line);
-            }
-            Assertions.assertEquals(expected,actual.toString().replace(" ",""));
-            logger.info("Test Passed");
-        } catch(Exception ex) {
-            logger.error("Error connecting to ProxyService", ExceptionUtils.getStackTrace(ex));
-            Assertions.fail();
-        }
+        Assertions.assertEquals(expected,actual);
+        logger.info("Value obtained from Proxy successfully");
+        logger.info("Test Passed");
     }
 
     @Test
@@ -82,7 +74,7 @@ public class TestProxyServerE2E {
         String key = UUID.randomUUID().toString();
         setKeyValueToRedisWithRetry(key, expected);
 
-        String actual = getValueForKeyFromProxy(key);
+        String actual = getValueForKeyFromProxy(key,200);
         Assertions.assertEquals(expected,actual);
         logger.info("Value obtained from Proxy successfully for the first time");
         logger.info("Unsetting key in Redis");
@@ -90,19 +82,62 @@ public class TestProxyServerE2E {
 
         Assertions.assertNull(redis.get(key));
 
-        String retrievedAgain = getValueForKeyFromProxy(key);
+        String retrievedAgain = getValueForKeyFromProxy(key,200);
         Assertions.assertEquals(expected,retrievedAgain);
 
         logger.info("Value obtained from Proxy successfully for the second time");
         logger.info("Test Passed");
     }
 
+    @Test
+    @DisplayName("This test sets a key value pair in Redis and then queries the proxy service API with that key. After that it sleeps for the duration of expiry of the key " +
+            "and queries Proxy Service again to ensure it returns Not Found")
 
-    private String getValueForKeyFromProxy(String key) {
-    HttpGet request = new HttpGet("http://proxy-service:8080/cache/"+key);
+    public void test3() {
+        logger.info("\n\n[TEST 3] - This test sets a key value pair in Redis and then queries the proxy service API with that key. After that it sleeps for the duration of expiry of the key "+
+                "and queries Proxy Service again to ensure it returns Not Found");
+
+        String expected = getRandomValueFromTestData();
+        String key = UUID.randomUUID().toString();
+        setKeyValueToRedisWithRetry(key, expected);
+
+        String actual = getValueForKeyFromProxy(key,200);
+        Assertions.assertEquals(expected,actual);
+        logger.info("Value obtained from Proxy successfully for the first time");
+        logger.info("Sleeping for duration of Expiry");
+        try {
+            Thread.sleep(5000);
+        } catch (Exception ex) {
+            logger.error("Error during thread.sleep", ExceptionUtils.getStackTrace(ex));
+            Assertions.fail();
+        }
+
+        Assertions.assertNotNull(redis.get(key));
+
+        String retrievedAgain = getValueForKeyFromProxy(key,404);
+        Assertions.assertEquals(NOT_FOUND_MESSAGE,retrievedAgain);
+
+        logger.info("Value NOT FOUND from Proxy for the second time");
+        logger.info("Test Passed");
+    }
+
+    @Test
+    @DisplayName("This test queries the proxy service for a key that doesn't exist either in the proxy cache or redis and checks if 404 RESOURCE_NOT_FOUND is returned")
+    public void test4() {
+        logger.info("\n\n[TEST 4] - This test queries the proxy service for a key that doesn't exist either in the proxy cache or redis and checks if 404 RESOURCE_NOT_FOUND is returned");
+        String key = UUID.randomUUID().toString();
+        String actual = getValueForKeyFromProxy(key,404);
+        Assertions.assertEquals(NOT_FOUND_MESSAGE,actual);
+        logger.info("Test Passed");
+    }
+
+
+    private String getValueForKeyFromProxy(String key, int expectedStatusCode) {
+    HttpGet request = new HttpGet("http://"+PROXY_HOST+":8080/cache/"+key);
         StringBuilder responseString = new StringBuilder();
         try {
             HttpResponse response = client.execute(request);
+            Assertions.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
             BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
 
             String line = "";

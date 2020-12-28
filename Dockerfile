@@ -37,4 +37,4 @@ COPY . /usr/app/segment-redis-proxy
 
 WORKDIR /usr/app/segment-redis-proxy
 
-ENTRYPOINT ["mvn", "exec:java", "-Dexec.args=--REDIS_HOST=redis --REDIS_PORT=6379 --GLOBAL_EXPIRY=60 --CACHE_SIZE=15 --PROXY_PORT=8080"]
+ENTRYPOINT ["mvn", "exec:java", "-Dexec.args=--REDIS_HOST=redis --REDIS_PORT=6379 --GLOBAL_EXPIRY=5 --CACHE_SIZE=10 --PROXY_PORT=8080"]
