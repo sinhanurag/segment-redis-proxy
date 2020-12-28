@@ -127,9 +127,43 @@ public class TestProxyServerE2E {
     }
 
     @Test
-    @DisplayName("This test queries the proxy service for a key that doesn't exist either in the proxy cache or redis and checks if 404 RESOURCE_NOT_FOUND is returned")
+    @DisplayName("LRU eviction test - This test sets key values in Redis for more than the capacity of the local cache and then queries the proxy for all those keys. It is expected" +
+            "that for the size+1 key the first key which was least recently accessed should be removed")
+
     public void test4() {
-        logger.info("\n\n[TEST 4] - This test queries the proxy service for a key that doesn't exist either in the proxy cache or redis and checks if 404 RESOURCE_NOT_FOUND is returned");
+        logger.info("\n\n[TEST 4] - LRU eviction test - This test sets key values in Redis for more than the capacity of the local cache and then queries the proxy for all those keys. It is expected" +
+                "that for the size+1 key the first key which was least recently accessed should be removed");
+        List<String> keys = new ArrayList<>();
+
+        // Add size+1 keys to Redis
+        for (int i=0;i<=Integer.parseInt(CACHE_SIZE);i++) {
+            String key = UUID.randomUUID().toString();
+            setKeyValueToRedisWithRetry(key, getRandomValueFromTestData());
+            keys.add(key);
+        }
+
+        // Query Proxy for all the keys present which are equal to max capacity. Any query after this should evict the first key (in a typical LRU fashion)
+        // as the proxy will try to get a new key value from Redis and it has run out of space.
+
+        for(String key:keys) {
+            getValueForKeyFromProxy(key,200);
+        }
+
+        // At this point the cache is full and if we try to lookup any key the first key in keys[0] should be evicted.
+            getValueForKeyFromProxy(keys.get(4), 200);
+
+        //Let us delete key[0] from redis as well so that when we query the proxy it should return 404 NOT_FOUND
+            redis.del(keys.get(0));
+        // Now let us query the proxy for keys[0] and assert.
+            String actual = getValueForKeyFromProxy(keys.get(0),404);
+            Assertions.assertEquals(NOT_FOUND_MESSAGE,actual);
+            logger.info("Test Passed");
+    }
+
+    @Test
+    @DisplayName("This test queries the proxy service for a key that doesn't exist either in the proxy cache or redis and checks if 404 RESOURCE_NOT_FOUND is returned")
+    public void test5() {
+        logger.info("\n\n[TEST 5] - This test queries the proxy service for a key that doesn't exist either in the proxy cache or redis and checks if 404 RESOURCE_NOT_FOUND is returned");
         String key = UUID.randomUUID().toString();
         String actual = getValueForKeyFromProxy(key,404);
         Assertions.assertEquals(NOT_FOUND_MESSAGE,actual);

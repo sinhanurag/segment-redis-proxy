@@ -35,7 +35,7 @@ services:
     depends_on:
       - redis
       - proxy-service
-    command: -DREDIS_HOST=redis -DREDIS_PORT=${REDIS_PORT} -DPROXY_HOST=proxy-service -DPROXY_PORT=${PROXY_PORT} -DGLOBAL_EXPIRY=${GLOBAL_EXPIRY}
+    command: -DREDIS_HOST=redis -DREDIS_PORT=${REDIS_PORT} -DPROXY_HOST=proxy-service -DPROXY_PORT=${PROXY_PORT} -DGLOBAL_EXPIRY=${GLOBAL_EXPIRY} -DCACHE_SIZE=${CACHE_SIZE}
 
     networks:
       - common
