@@ -23,7 +23,7 @@ import java.util.UUID;
 
 public class TestProxyServerE2E {
 
-    private static final Jedis redis = new Jedis("127.0.0.1", 6379, 1800);
+    private static final Jedis redis = new Jedis("redis", 6379, 1800);
     private static final HttpClient client = HttpClientBuilder.create().build();
     private static final Logger logger = LoggerFactory.getLogger(TestProxyServerE2E.class);
     private static final List<String> testData = new ArrayList<>();
@@ -46,12 +46,13 @@ public class TestProxyServerE2E {
 
     @Test
     @DisplayName("This test sets a key value pair in Redis and then queries the proxy service API with that key to assert if we get back the same value")
-    public void testProxyGetsValueForKeyFromRedis() {
+    public void test1() {
+        logger.info("\n\n[TEST 1] - This test sets a key value pair in Redis and then queries the proxy service API with that key to assert if we get back the same value");
         String expected = getRandomValueFromTestData();
         String key = UUID.randomUUID().toString();
         setKeyValueToRedisWithRetry(key, expected);
 
-        HttpGet request = new HttpGet("http://localhost:8080/cache/"+key);
+        HttpGet request = new HttpGet("http://proxy-service:8080/cache/"+key);
         try {
             HttpResponse response = client.execute(request);
             BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
@@ -62,10 +63,57 @@ public class TestProxyServerE2E {
                 actual.append(line);
             }
             Assertions.assertEquals(expected,actual.toString().replace(" ",""));
+            logger.info("Test Passed");
         } catch(Exception ex) {
             logger.error("Error connecting to ProxyService", ExceptionUtils.getStackTrace(ex));
             Assertions.fail();
         }
+    }
+
+    @Test
+    @DisplayName("This test sets a key value pair in Redis and then queries the proxy service API with that key after that it deletes that key from redis " +
+            "and queries Proxy Service to ensure it is returned from local cache")
+
+    public void test2() {
+        logger.info("\n\n[TEST 2] - This test sets a key value pair in Redis and then queries the proxy service API with that key. After that it deletes that key from redis " +
+                "and queries Proxy Service to ensure it is returned from local cache");
+
+        String expected = getRandomValueFromTestData();
+        String key = UUID.randomUUID().toString();
+        setKeyValueToRedisWithRetry(key, expected);
+
+        String actual = getValueForKeyFromProxy(key);
+        Assertions.assertEquals(expected,actual);
+        logger.info("Value obtained from Proxy successfully for the first time");
+        logger.info("Unsetting key in Redis");
+        redis.del(key);
+
+        Assertions.assertNull(redis.get(key));
+
+        String retrievedAgain = getValueForKeyFromProxy(key);
+        Assertions.assertEquals(expected,retrievedAgain);
+
+        logger.info("Value obtained from Proxy successfully for the second time");
+        logger.info("Test Passed");
+    }
+
+
+    private String getValueForKeyFromProxy(String key) {
+    HttpGet request = new HttpGet("http://proxy-service:8080/cache/"+key);
+        StringBuilder responseString = new StringBuilder();
+        try {
+            HttpResponse response = client.execute(request);
+            BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+
+            String line = "";
+            while ((line = rd.readLine()) != null) {
+                responseString.append(line);
+            }
+        }catch(Exception ex) {
+                logger.error("Error connecting to ProxyService", ExceptionUtils.getStackTrace(ex));
+                Assertions.fail();
+            }
+        return responseString.toString().replace(" ","");
     }
 
     private String getRandomValueFromTestData() {

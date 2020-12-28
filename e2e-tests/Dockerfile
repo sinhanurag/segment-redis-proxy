@@ -30,11 +30,10 @@ RUN mkdir -p /usr/share/maven /usr/share/maven/ref \
 ENV MAVEN_HOME /usr/share/maven
 ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
 
-EXPOSE 8080
+RUN mkdir -p /usr/app /usr/app/e2e-tests
+COPY . /usr/app/e2e-tests
+RUN ["chmod","+x" ,"/usr/app/e2e-tests/wait-for-it.sh"]
 
-RUN mkdir -p /usr/app /usr/app/segment-redis-proxy 
-COPY . /usr/app/segment-redis-proxy
+WORKDIR /usr/app/e2e-tests
 
-WORKDIR /usr/app/segment-redis-proxy
-
-ENTRYPOINT ["mvn", "exec:java", "-Dexec.args=--REDIS_HOST=redis --REDIS_PORT=6379 --GLOBAL_EXPIRY=60 --CACHE_SIZE=15 --PROXY_PORT=8080"]
+ENTRYPOINT ["/usr/app/e2e-tests/wait-for-it.sh","proxy-service:8080","--","mvn","test"]
