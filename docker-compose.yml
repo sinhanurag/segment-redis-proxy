@@ -10,7 +10,9 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:8080" # Forward the exposed port 8080 on the container to port 8080 on the host machine
+      - ${PROXY_PORT}:${PROXY_PORT} # Forward the exposed port 8080 on the container to port 8080 on the host machine
+
+    command: -Dexec.args="--REDIS_HOST=redis --REDIS_PORT=${REDIS_PORT} --GLOBAL_EXPIRY=${GLOBAL_EXPIRY} --CACHE_SIZE=${CACHE_SIZE} --PROXY_PORT=${PROXY_PORT}"
     depends_on:
       - redis # This service depends on Redis. Start that first.
 
@@ -21,7 +23,8 @@ services:
   redis:
     image: naviter/redis-6.0.4-alpine
     ports:
-      - "6379:6379"
+      - ${REDIS_PORT}:${REDIS_PORT}
+    command: --port ${REDIS_PORT}
     networks:
       - common
 
@@ -32,6 +35,8 @@ services:
     depends_on:
       - redis
       - proxy-service
+    command: -DREDIS_HOST=redis -DREDIS_PORT=${REDIS_PORT} -DPROXY_HOST=proxy-service -DPROXY_PORT=${PROXY_PORT} -DGLOBAL_EXPIRY=${GLOBAL_EXPIRY}
+
     networks:
       - common
 

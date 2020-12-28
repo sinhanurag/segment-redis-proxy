@@ -1,6 +1,6 @@
 #!/bin/bash
-docker-compose rm -f
-docker-compose build --no-cache
-docker-compose up
+REDIS_PORT=6000 GLOBAL_EXPIRY=5 CACHE_SIZE=10 PROXY_PORT=7000 docker-compose rm -f
+REDIS_PORT=6000 GLOBAL_EXPIRY=5 CACHE_SIZE=10 PROXY_PORT=7000 docker-compose build --no-cache
+REDIS_PORT=6000 GLOBAL_EXPIRY=5 CACHE_SIZE=10 PROXY_PORT=7000 docker-compose up
 
 

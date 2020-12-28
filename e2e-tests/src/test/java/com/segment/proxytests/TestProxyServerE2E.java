@@ -23,9 +23,14 @@ import java.util.UUID;
 
 public class TestProxyServerE2E {
 
-    private static final String REDIS_HOST = "redis";
-    private static final String PROXY_HOST = "proxy-service";
-    private static final Jedis redis = new Jedis(REDIS_HOST, 6379, 1800);
+    private static final String REDIS_HOST = System.getProperty("REDIS_HOST");
+    private static final String REDIS_PORT = System.getProperty("REDIS_PORT");
+    private static final String PROXY_HOST = System.getProperty("PROXY_HOST");
+    private static final String PROXY_PORT = System.getProperty("PROXY_PORT");
+    private static final String CACHE_SIZE = System.getProperty("CACHE_SIZE");
+    private static final String GLOBAL_EXPIRY = System.getProperty("GLOBAL_EXPIRY");
+
+    private static final Jedis redis = new Jedis(REDIS_HOST, Integer.parseInt(REDIS_PORT), 1800);
     private static final HttpClient client = HttpClientBuilder.create().build();
     private static final Logger logger = LoggerFactory.getLogger(TestProxyServerE2E.class);
     private static final List<String> testData = new ArrayList<>();
@@ -106,7 +111,7 @@ public class TestProxyServerE2E {
         logger.info("Value obtained from Proxy successfully for the first time");
         logger.info("Sleeping for duration of Expiry");
         try {
-            Thread.sleep(5000);
+            Thread.sleep((Long.parseLong(GLOBAL_EXPIRY)*1000));
         } catch (Exception ex) {
             logger.error("Error during thread.sleep", ExceptionUtils.getStackTrace(ex));
             Assertions.fail();
@@ -133,7 +138,7 @@ public class TestProxyServerE2E {
 
 
     private String getValueForKeyFromProxy(String key, int expectedStatusCode) {
-    HttpGet request = new HttpGet("http://"+PROXY_HOST+":8080/cache/"+key);
+    HttpGet request = new HttpGet("http://"+PROXY_HOST+":"+PROXY_PORT+"/cache/"+key);
         StringBuilder responseString = new StringBuilder();
         try {
             HttpResponse response = client.execute(request);
